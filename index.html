@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>100歳クエスト - ミニデモ</title>
+    <link rel="stylesheet" href="src/css/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>100歳クエスト（ミニデモ）</h1>
+      <div class="turn">月：<span id="turn">1</span> / 12</div>
+    </header>
+
+    <main>
+      <section class="status">
+        <div class="stat"><span>体力</span><b id="hp">50</b></div>
+        <div class="stat"><span>気力</span><b id="sp">50</b></div>
+        <div class="stat"><span>趣味Lv</span><b id="hobby">1</b></div>
+        <div class="stat"><span>交流Lv</span><b id="social">1</b></div>
+      </section>
+
+      <section class="cards">
+        <h2>今月のカードから1つ選ぶ</h2>
+        <div id="card-list" class="card-list"></div>
+      </section>
+
+      <section class="log">
+        <h3>ログ</h3>
+        <ul id="log"></ul>
+      </section>
+    </main>
+
+    <footer>
+      <button id="next" disabled>次の月へ</button>
+    </footer>
+
+    <script src="src/js/app.js"></script>
+  </body>
+</html>
