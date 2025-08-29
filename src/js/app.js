@@ -1,32 +1,68 @@
-// 初期状態
+// ==============================
+// 状態
+// ==============================
 let state = {
   turn: 1,
-  maxTurn: 3, // ← デモ用に3ターンに設定（本番は12）
+  maxTurn: 3, // デモ用（本番は12）
   hp: 50,
   sp: 50,
   hobby: 1,
-  social: 1
+  social: 1,
+  monthDone: [false, false, false] // 月ごとの「カード選択済み」フラグ
 };
 
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const monthLabels = ["1月", "2月", "3月"]; // デモ用
+
+// ==============================
+// ログ
+// ==============================
 const log = msg => {
   const li = document.createElement('li');
   li.textContent = msg;
   $('#log').prepend(li);
 };
 
-// ───────────────────────────────────────
-// HUD（上部ステータス）だけを更新する関数を追加
+// ==============================
+// HUD（ターン/数値）の更新
+// ==============================
 function updateHUD() {
-  $('#turn').textContent = state.turn;
   $('#hp').textContent = state.hp;
   $('#sp').textContent = state.sp;
   $('#hobby').textContent = state.hobby;
   $('#social').textContent = state.social;
 }
-// ───────────────────────────────────────
 
-// 今月のカード（福岡らしさ3枚・固定でOK）
+// ==============================
+// 月バーの描画
+// ==============================
+function renderMonths() {
+  const wrap = $('#months');
+  wrap.innerHTML = '';
+  monthLabels.forEach((label, idx) => {
+    const pill = document.createElement('div');
+    pill.className = 'month-pill';
+    pill.textContent = label;
+
+    // 現在ターンは強調、それ以前で選択済みはグレーアウト
+    if (idx + 1 === state.turn) {
+      pill.classList.add('active');
+      if (state.monthDone[idx]) pill.classList.add('done');
+    } else if (idx + 1 < state.turn) {
+      pill.classList.add('done');
+    } else {
+      // 未来の月はそのまま
+    }
+
+    wrap.appendChild(pill);
+  });
+}
+
+// ==============================
+// 今月のカード（福岡らしさ3枚・固定）
+// ==============================
 function monthlyCards() {
   return [
     {
@@ -47,15 +83,20 @@ function monthlyCards() {
   ];
 }
 
-function clamp(val, min, max) {
-  return Math.max(min, Math.min(max, val));
-}
+// ==============================
+// ユーティリティ
+// ==============================
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+function fmt(n) { return (n > 0 ? '+' : '') + n; }
 
+// ==============================
+// 描画
+// ==============================
 function render() {
-  // 上部のHUD（ターン/各数値）を反映
   updateHUD();
+  renderMonths();
 
-  // カード一覧の更新
+  // カード一覧
   const list = $('#card-list');
   list.innerHTML = '';
   const cards = monthlyCards();
@@ -71,23 +112,33 @@ function render() {
     list.appendChild(div);
   });
 
-  // 今月はまだ未確定なので「次の月へ」は無効化
-  $('#next').disabled = true;
+  // 今月は未確定なので「次の月へ」は無効化（選択後に有効化）
+  $('#next').disabled = !state.monthDone[state.turn - 1];
 }
 
-function fmt(n) {
-  return (n > 0 ? '+' : '') + n;
-}
-
+// ==============================
+// カード選択
+// ==============================
 function selectCard(card, el) {
-  // 一度選んだら今月は他を選べない仕様（見た目だけ区別）
-  [...document.querySelectorAll('.card')].forEach(c => c.classList.remove('selected'));
+  // 同月での重複適用を防ぐ：すでに選択済みなら無視
+  if (state.monthDone[state.turn - 1]) return;
+
+  // 見た目ハイライト
+  $$('.card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
 
+  // 効果適用
   applyEffects(card.effect);
-  $('#next').disabled = false; // カード確定後に次へ進める
+
+  // 今月を「完了」に
+  state.monthDone[state.turn - 1] = true;
+  $('#next').disabled = false;
+
+  // 月バー更新（グレーアウト反映）
+  renderMonths();
 }
 
+// 効果適用
 function applyEffects(eff) {
   state.hp = clamp(state.hp + eff.hp, 0, 100);
   state.sp = clamp(state.sp + eff.sp, 0, 100);
@@ -95,13 +146,13 @@ function applyEffects(eff) {
   state.hobby = clamp(state.hobby + eff.hobby, 1, 5);
   state.social = clamp(state.social + eff.social, 1, 5);
 
-  // ★ ここでHUDを即更新（クリック直後に数値が変わって見える）
   updateHUD();
-
   log(`月${state.turn}：カード適用 → 体力${state.hp} / 気力${state.sp} / 趣味Lv${state.hobby} / 交流Lv${state.social}`);
 }
 
+// 次の月へ
 $('#next').addEventListener('click', () => {
+  if (!state.monthDone[state.turn - 1]) return; // 念のため
   if (state.turn >= state.maxTurn) {
     // エンディング表示
     $('#end-hp').textContent = state.hp;
@@ -117,10 +168,13 @@ $('#next').addEventListener('click', () => {
 
 // リスタート
 $('#restart')?.addEventListener('click', () => {
-  state = { turn: 1, maxTurn: 3, hp: 50, sp: 50, hobby: 1, social: 1 };
+  state = {
+    turn: 1, maxTurn: 3, hp: 50, sp: 50, hobby: 1, social: 1,
+    monthDone: [false, false, false]
+  };
   document.querySelector('.ending').classList.add('hidden');
   render();
 });
 
-// 初回描画
+// 初期描画
 render();
