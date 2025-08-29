@@ -1,39 +1,49 @@
 // 初期状態
 let state = {
   turn: 1,
-  maxTurn: 12,
+  maxTurn: 3, // ← デモ用に3ターンに設定（本番は12）
   hp: 50,
   sp: 50,
   hobby: 1,
-  social: 1,
+  social: 1
 };
 
-const $ = (s) => document.querySelector(s);
-const log = (msg) => {
-  const li = document.createElement("li");
+const $ = s => document.querySelector(s);
+const log = msg => {
+  const li = document.createElement('li');
   li.textContent = msg;
-  $("#log").prepend(li);
+  $('#log').prepend(li);
 };
 
-// 今月のカード（例：10案から3枚抽選でもOK。まずは固定3枚）
+// ───────────────────────────────────────
+// HUD（上部ステータス）だけを更新する関数を追加
+function updateHUD() {
+  $('#turn').textContent = state.turn;
+  $('#hp').textContent = state.hp;
+  $('#sp').textContent = state.sp;
+  $('#hobby').textContent = state.hobby;
+  $('#social').textContent = state.social;
+}
+// ───────────────────────────────────────
+
+// 今月のカード（福岡らしさ3枚・固定でOK）
 function monthlyCards() {
-  // 影響は議論準拠：趣味Lv/交流Lv は ±1の範囲で
   return [
     {
-      title: "公園でラジオ体操",
-      desc: "朝の体操でリフレッシュ。顔見知りとあいさつ。",
-      effect: { hp: +5, sp: 0, hobby: 0, social: +1 },
+      title: '公園でラジオ体操',
+      desc: '朝の体操でリフレッシュ。顔見知りとあいさつ。',
+      effect: { hp: +5, sp: 0, hobby: 0, social: +1 }
     },
     {
-      title: "地域カフェに立ち寄る",
-      desc: "お茶とおしゃべり、今日は脳トレも。",
-      effect: { hp: 0, sp: +3, hobby: +1, social: +1 },
+      title: '地域カフェに立ち寄る',
+      desc: 'お茶とおしゃべり。今日はコグニ体操と血圧チェックも。',
+      effect: { hp: +2, sp: +3, hobby: +1, social: +1 }
     },
     {
-      title: "オンライン公開講座を見る",
-      desc: "気になっていた歴史講座に参加。新しい視点を得た。",
-      effect: { hp: 0, sp: +5, hobby: +1, social: 0 },
-    },
+      title: '公民館のスマホ教室',
+      desc: '写真の保存とLINEの使い方を学んだ。新しい世界が広がる。',
+      effect: { hp: 0, sp: +4, hobby: +1, social: 0 }
+    }
   ];
 }
 
@@ -42,44 +52,40 @@ function clamp(val, min, max) {
 }
 
 function render() {
-  $("#turn").textContent = state.turn;
-  $("#hp").textContent = state.hp;
-  $("#sp").textContent = state.sp;
-  $("#hobby").textContent = state.hobby;
-  $("#social").textContent = state.social;
+  // 上部のHUD（ターン/各数値）を反映
+  updateHUD();
 
-  const list = $("#card-list");
-  list.innerHTML = "";
+  // カード一覧の更新
+  const list = $('#card-list');
+  list.innerHTML = '';
   const cards = monthlyCards();
-  cards.forEach((c, idx) => {
-    const div = document.createElement("div");
-    div.className = "card";
+  cards.forEach((c) => {
+    const div = document.createElement('div');
+    div.className = 'card';
     div.innerHTML = `
       <h4>${c.title}</h4>
       <p class="effects">${c.desc}</p>
-      <p class="effects">効果：体力 ${fmt(c.effect.hp)} / 気力 ${fmt(
-      c.effect.sp
-    )} / 趣味Lv ${fmt(c.effect.hobby)} / 交流Lv ${fmt(c.effect.social)}</p>
+      <p class="effects">効果：体力 ${fmt(c.effect.hp)} / 気力 ${fmt(c.effect.sp)} / 趣味Lv ${fmt(c.effect.hobby)} / 交流Lv ${fmt(c.effect.social)}</p>
     `;
-    div.addEventListener("click", () => selectCard(c, div));
+    div.addEventListener('click', () => selectCard(c, div));
     list.appendChild(div);
   });
 
-  $("#next").disabled = true;
+  // 今月はまだ未確定なので「次の月へ」は無効化
+  $('#next').disabled = true;
 }
 
 function fmt(n) {
-  return (n > 0 ? "+" : "") + n;
+  return (n > 0 ? '+' : '') + n;
 }
 
 function selectCard(card, el) {
-  // 一度選んだら今月は他を選べない仕様に
-  [...document.querySelectorAll(".card")].forEach((c) =>
-    c.classList.remove("selected")
-  );
-  el.classList.add("selected");
+  // 一度選んだら今月は他を選べない仕様（見た目だけ区別）
+  [...document.querySelectorAll('.card')].forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
   applyEffects(card.effect);
-  $("#next").disabled = false;
+  $('#next').disabled = false; // カード確定後に次へ進める
 }
 
 function applyEffects(eff) {
@@ -89,19 +95,32 @@ function applyEffects(eff) {
   state.hobby = clamp(state.hobby + eff.hobby, 1, 5);
   state.social = clamp(state.social + eff.social, 1, 5);
 
-  log(
-    `月${state.turn}：カード適用 → 体力${state.hp} / 気力${state.sp} / 趣味Lv${state.hobby} / 交流Lv${state.social}`
-  );
+  // ★ ここでHUDを即更新（クリック直後に数値が変わって見える）
+  updateHUD();
+
+  log(`月${state.turn}：カード適用 → 体力${state.hp} / 気力${state.sp} / 趣味Lv${state.hobby} / 交流Lv${state.social}`);
 }
 
-$("#next").addEventListener("click", () => {
+$('#next').addEventListener('click', () => {
   if (state.turn >= state.maxTurn) {
-    log("エンディング：1年の暮らしをやり切りました！おつかれさま。");
-    alert("エンディング：おつかれさま！");
+    // エンディング表示
+    $('#end-hp').textContent = state.hp;
+    $('#end-sp').textContent = state.sp;
+    $('#end-hobby').textContent = state.hobby;
+    $('#end-social').textContent = state.social;
+    document.querySelector('.ending').classList.remove('hidden');
     return;
   }
   state.turn += 1;
   render();
 });
 
+// リスタート
+$('#restart')?.addEventListener('click', () => {
+  state = { turn: 1, maxTurn: 3, hp: 50, sp: 50, hobby: 1, social: 1 };
+  document.querySelector('.ending').classList.add('hidden');
+  render();
+});
+
+// 初回描画
 render();

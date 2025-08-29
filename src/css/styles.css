@@ -126,3 +126,18 @@ button:disabled {
   padding: 4px 0;
   border-bottom: 1px dotted #2a2e36;
 }
+.ending.hidden { display: none; }
+.ending {
+  position: fixed; inset: 0; background: rgba(0,0,0,.6);
+  display: grid; place-items: center; z-index: 999;
+}
+.ending-card {
+  background:#14161c; border:1px solid #2a2e36; border-radius: 16px;
+  padding: 22px; min-width: 320px; text-align: center; color:#e8eef6;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+}
+.ending-card h2 { margin: 0 0 8px 0; }
+.ending-card button {
+  margin-top: 12px; background:#4cc9f0; color:#03202a; border:none;
+  padding:10px 16px; border-radius: 10px; font-weight:700; cursor:pointer;
+}
