@@ -7,49 +7,120 @@
   <link rel="stylesheet" href="src/css/styles.css" />
 </head>
 <body>
-  <header class="header centered">
-    <h1>100歳クエスト（ミニデモ）</h1>
-  </header>
 
-  <main>
-    <section class="months centered">
-      <div id="months" class="months-bar" aria-label="月の進行表示"></div>
-    </section>
-
-    <section class="status centered">
-      <div class="stat"><span>体力</span><b id="hp">50</b></div>
-      <div class="stat"><span>気力</span><b id="sp">50</b></div>
-      <div class="stat"><span>趣味Lv</span><b id="hobby">1</b></div>
-      <div class="stat"><span>交流Lv</span><b id="social">1</b></div>
-    </section>
-
-    <section class="cards">
-      <h2 class="centered">今月のカードから1つ選ぶ</h2>
-      <div id="card-list" class="card-list"></div>
-    </section>
-
-    <section class="log">
-      <h3>ログ</h3>
-      <ul id="log"></ul>
-    </section>
-  </main>
-
-  <footer class="centered">
-    <button id="next" disabled>次の月へ</button>
-  </footer>
-
-  <!-- エンディング -->
-  <div id="ending" class="ending hidden" role="dialog" aria-modal="true" aria-labelledby="ending-title">
-    <div class="ending-card">
-      <h2 id="ending-title">エンディング</h2>
-      <p>
-        1年（デモでは3ヶ月）を走り切りました。<br />
-        体力：<b id="end-hp"></b>　気力：<b id="end-sp"></b><br />
-        趣味Lv：<b id="end-hobby"></b>　交流Lv：<b id="end-social"></b>
-      </p>
-      <button id="restart">はじめから</button>
+  <!-- ===== スクリーン: タイトル ===== -->
+  <section id="screen-title" class="screen active">
+    <div class="centered column">
+      <h1>100歳クエスト</h1>
+      <p class="sub">100歳の自分で、1年間（12ターン）の暮らしをカードで選ぶミニゲーム</p>
+      <button id="to-howto" class="primary">はじめる</button>
     </div>
-  </div>
+  </section>
+
+  <!-- ===== スクリーン: 遊び方 ===== -->
+  <section id="screen-howto" class="screen">
+    <div class="panel">
+      <h2>あそびかた（かんたん）</h2>
+      <ol>
+        <li>最初に「キャラ」「家族構成」「居住地区」を選びます。</li>
+        <li>毎月1枚、行動カードを選ぶと「体力・気力・趣味Lv・交流Lv」が変化します。</li>
+        <li>1年後、選択の積み重ねでエンディングが変わります。</li>
+      </ol>
+      <div class="actions">
+        <button id="to-choose-char" class="primary">つぎへ（キャラ選択）</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== スクリーン: キャラ選択 ===== -->
+  <section id="screen-char" class="screen">
+    <h2 class="centered">① キャラクターを選ぶ（ラーメンのかたさ）</h2>
+    <div id="char-list" class="select-grid"></div>
+    <div class="actions">
+      <button id="to-choose-family" class="primary" disabled>つぎへ（家族構成）</button>
+    </div>
+  </section>
+
+  <!-- ===== スクリーン: 家族構成選択 ===== -->
+  <section id="screen-family" class="screen">
+    <h2 class="centered">② 家族構成を選ぶ</h2>
+    <div id="family-list" class="select-grid"></div>
+    <div class="actions">
+      <button id="to-choose-district" class="primary" disabled>つぎへ（居住地区）</button>
+    </div>
+  </section>
+
+  <!-- ===== スクリーン: 居住地区選択 ===== -->
+  <section id="screen-district" class="screen">
+    <h2 class="centered">③ 居住地区を選ぶ</h2>
+    <div id="district-list" class="select-grid"></div>
+    <div class="actions">
+      <button id="to-game" class="primary" disabled>ゲーム開始</button>
+    </div>
+  </section>
+
+  <!-- ===== スクリーン: ゲーム ===== -->
+  <section id="screen-game" class="screen">
+    <header class="header centered">
+      <h1>100歳クエスト（ミニデモ）</h1>
+    </header>
+
+    <main>
+      <!-- 月バー -->
+      <section class="months centered">
+        <div id="months" class="months-bar" aria-label="月の進行表示"></div>
+      </section>
+
+      <!-- 選択概要＋アバター -->
+      <section class="profile centered">
+        <div class="avatar-wrap">
+          <div id="avatar" class="avatar pixel"></div>
+          <div class="avatar-labels">
+            <div id="sel-char" class="pill"></div>
+            <div id="sel-family" class="pill"></div>
+            <div id="sel-district" class="pill"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ステータス -->
+      <section class="status centered">
+        <div class="stat"><span>体力</span><b id="hp">50</b></div>
+        <div class="stat"><span>気力</span><b id="sp">50</b></div>
+        <div class="stat"><span>趣味Lv</span><b id="hobby">1</b></div>
+        <div class="stat"><span>交流Lv</span><b id="social">1</b></div>
+      </section>
+
+      <!-- カード -->
+      <section class="cards">
+        <h2 class="centered" id="month-title">今月のカードから1つ選ぶ</h2>
+        <div id="card-list" class="card-list"></div>
+      </section>
+
+      <!-- ログ -->
+      <section class="log">
+        <h3>ログ</h3>
+        <ul id="log"></ul>
+      </section>
+    </main>
+
+    <footer class="centered">
+      <button id="next" disabled>次の月へ</button>
+    </footer>
+
+    <!-- エンディング -->
+    <div id="ending" class="ending hidden" role="dialog" aria-modal="true" aria-labelledby="ending-title">
+      <div class="ending-card">
+        <h2 id="ending-title">エンディング</h2>
+        <p>
+          1年の暮らしを終えました。<br />
+          体力：<b id="end-hp"></b>　気力：<b id="end-sp"></b><br />
+          趣味Lv：<b id="end-hobby"></b>　交流Lv：<b id="end-social"></b>
+        </p>
+        <button id="restart">はじめから</button>
+      </div>
+    </div>
+  </section>
 
   <script src="src/js/app.js"></script>
 </body>
