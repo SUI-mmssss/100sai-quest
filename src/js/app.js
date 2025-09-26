@@ -8,24 +8,24 @@ function showScreen(id) {
   $(id).classList.add('active');
 }
 
-// タイトル→説明→選択3枚→ゲーム
+// タイトル→説明→選択3枚→ゲーム（※ゲーム開始時にエピソード読込）
 $('#to-howto')?.addEventListener('click', () => showScreen('#screen-howto'));
 $('#to-choose-char')?.addEventListener('click', () => { renderCharOptions(); showScreen('#screen-char'); });
 $('#to-choose-family')?.addEventListener('click', () => { renderFamilyOptions(); showScreen('#screen-family'); });
 $('#to-choose-district')?.addEventListener('click', () => { renderDistrictOptions(); showScreen('#screen-district'); });
-$('#to-game')?.addEventListener('click', () => { startGame(); showScreen('#screen-game'); });
+$('#to-game')?.addEventListener('click', async () => { await startGame(); showScreen('#screen-game'); });
 
 // ==============================
-// 選択肢データ
+// 選択肢データ（現状のまま利用）
 // ==============================
-// キャラ（ハリガネは隠しだが、今は4種で開始）
+// キャラ
 const CHARACTERS = [
   { id:'normal', label:'ふつう',  desc:'バランス型。状況に合わせて柔軟に対応。' },
   { id:'katame', label:'かため',  desc:'意志が強い。独立心旺盛。' },
   { id:'yawarakame', label:'やわらかめ', desc:'協調重視。人との調和を大切にする。' },
   { id:'barikata', label:'バリカタ', desc:'せっかち行動派。思い立ったら即行動。' }
 ];
-// 家族構成（テキストは簡潔に）
+// 家族構成
 const FAMILIES = [
   { id:'solo',   label:'ひとり暮らし', desc:'自由で気楽、少しの不安も。' },
   { id:'couple', label:'夫婦ふたり',   desc:'安心感、たまに衝突。' },
@@ -34,7 +34,7 @@ const FAMILIES = [
   { id:'facility',label:'施設暮らし',  desc:'プロのサポート、出会いが鍵。' },
   { id:'friends',label:'友人シェア',   desc:'楽しい共同生活、個性の衝突も。' }
 ];
-// 居住地区（5地区）
+// 居住地区
 const DISTRICTS = [
   { id:'higashi', label:'東区',   desc:'海とアイランドシティ、伸びやかな暮らし。' },
   { id:'hakata',  label:'博多区', desc:'寺社と商業のミックス、祭の熱気。' },
@@ -43,14 +43,10 @@ const DISTRICTS = [
   { id:'nishi',   label:'西区',   desc:'糸島方面へも気軽に足を伸ばせる。' }
 ];
 
-// 選択結果
-const selection = {
-  character: null,
-  family: null,
-  district: null
-};
+// ユーザーの最終選択
+const selection = { character: null, family: null, district: null };
 
-// ====== 選択画面描画
+// 選択UI描画（既存）
 function renderCharOptions() {
   const wrap = $('#char-list'); wrap.innerHTML = '';
   CHARACTERS.forEach(opt => {
@@ -98,12 +94,31 @@ function renderDistrictOptions() {
 }
 
 // ==============================
-// ゲーム本体
+// ゲーム本体（エピソード方式）
 // ==============================
-let state = null;
 const monthLabels = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
 
-function startGame() {
+let state = null;
+let episodes = []; // ← episodes.json を読み込む
+const EPISODES_URL = "src/js/episodes.json";
+
+// 分岐エンディング用のスコア（任意加点）
+const routeScore = { longevity: 0, family: 0, community: 0 }; // 例
+
+async function startGame() {
+  // エピソードを読み込み（初回のみ）
+  if (episodes.length === 0) {
+    try {
+      const res = await fetch(`${EPISODES_URL}?v=${Date.now()}`); // キャッシュ回避
+      episodes = await res.json();
+      log("エピソード読み込み完了");
+    } catch (e) {
+      console.error(e);
+      log("エピソード読み込みに失敗。デフォルトで進行します。");
+      episodes = fallbackEpisodes();
+    }
+  }
+
   // 初期状態
   state = {
     turn: 1,
@@ -111,23 +126,19 @@ function startGame() {
     hp: 50, sp: 50, hobby: 1, social: 1,
     monthDone: new Array(12).fill(false)
   };
-  // 選択表示
-  $('#sel-char').textContent = `キャラ：${selection.character?.label ?? '-'}`;
-  $('#sel-family').textContent = `家族：${selection.family?.label ?? '-'}`;
-  $('#sel-district').textContent = `地区：${selection.district?.label ?? '-'}`;
 
-  // アバター絵文字を一旦キャラ別に変える（後で画像差替OK）
+  // 選択情報表示
+  $('#sel-char').textContent    = `キャラ：${selection.character?.label ?? '-'}`;
+  $('#sel-family').textContent  = `家族：${selection.family?.label ?? '-'}`;
+  $('#sel-district').textContent= `地区：${selection.district?.label ?? '-'}`;
+
+  // アバター演出は既存のまま
   const avatar = $('#avatar');
-  avatar.classList.remove('shake','bob');
-  avatar.classList.add('bob');
-  const emoji = {
-    normal:'👴', katame:'🧓', yawarakame:'👵', barikata:'👨‍🦳'
-  }[selection.character?.id ?? 'normal'] || '👵';
-  avatar.innerHTML = ''; // 消して…
-  // 絵文字は CSS ::after を使ってたので、一瞬だけ shake/bob で演出
-  // ここでは何もしなくてもOK（差し替え時はimgタグを入れても良い）
+  avatar.classList.remove('shake','bob'); avatar.classList.add('bob');
+  avatar.innerHTML = '';
 
-  render();
+  render(); // HUD他
+  renderEpisode(); // ← エピソードを表示
 }
 
 function updateHUD() {
@@ -154,209 +165,175 @@ function renderMonths() {
   });
 }
 
-const E = (hp=0, sp=0, hobby=0, social=0) => ({ hp, sp, hobby, social });
-
-function monthlyCards(turn = state.turn) {
-  switch (turn) {
-    case 1:
-      return [
-        { title:'初詣（櫛田神社）', desc:'新年の祈りで気持ちを整える。参道を歩く。', effect:E(+1,+3,0,+1) },
-        { title:'公園でラジオ体操', desc:'朝のルーティンで体が目覚める。', effect:E(+5,0,0,+1) },
-        { title:'写真と手帳の整理', desc:'去年を振り返り、予定を少し書く。', effect:E(0,+3,0,0) }
-      ];
-    case 2:
-      return [
-        { title:'節分の集い（地域センター）', desc:'豆まきで交流が広がる。', effect:E(0,+3,0,+1) },
-        { title:'健康体操（公民館）', desc:'ストレッチで血行促進。', effect:E(+4,0,0,0) },
-        { title:'オンライン講座視聴', desc:'自宅で学ぶ。興味が広がる。', effect:E(0,+4,+1,0) }
-      ];
-    case 3:
-      return [
-        { title:'花見（舞鶴公園）', desc:'季節を感じて散策。', effect:E(+3,+2,0,+1) },
-        { title:'図書館の読書会', desc:'テーマ本を語り合う。', effect:E(0,+2,0,+1) },
-        { title:'地域ボランティア体験', desc:'見守りや配食で役割実感。', effect:E(0,+3,0,+1) }
-      ];
-    case 4:
-      return [
-        { title:'まちクリーンデー', desc:'近所のごみ拾いで爽快感。', effect:E(+2,+2,0,+1) },
-        { title:'公民館のスマホ教室', desc:'写真整理とLINEを学ぶ。', effect:E(0,+4,+1,0) },
-        { title:'家庭菜園を始める', desc:'プランターでハーブ栽培。', effect:E(0,+2,+1,0) }
-      ];
-    case 5:
-      return [
-        { title:'博多どんたく港まつり', desc:'見物/参加で街がにぎやか。', effect:E(0,+3,0,+1) },
-        { title:'地域カフェ', desc:'お茶と脳トレでひと息。', effect:E(+2,+3,+1,+1) },
-        { title:'河川敷を散歩', desc:'無理なく歩いて体力づくり。', effect:E(+4,0,0,0) }
-      ];
-    case 6:
-      return [
-        { title:'チェアヨガ', desc:'室内でゆっくり体を伸ばす。', effect:E(+3,+2,0,0) },
-        { title:'デジタル絵日記', desc:'写真＋ひとこと投稿。', effect:E(0,+3,+1,0) },
-        { title:'オンライン合唱', desc:'歌って気分転換。', effect:E(0,+2,0,+1) }
-      ];
-    case 7:
-      return [
-        { title:'博多祇園山笠を観る', desc:'迫力に元気をもらう。', effect:E(0,+3,0,+1) },
-        { title:'熱中症予防講座', desc:'水分・塩分・クーリング。', effect:E(+4,0,0,0) },
-        { title:'朝の涼しい散歩', desc:'日の出前に短時間で。', effect:E(+4,0,0,0) }
-      ];
-    case 8:
-      return [
-        { title:'夏祭り・盆踊り', desc:'踊って交流もUP。', effect:E(+1,+3,0,+1) },
-        { title:'ひ孫の自由研究を手伝う', desc:'昔の知恵を伝える。', effect:E(0,+2,+1,+1) },
-        { title:'クーラーで快適・脳トレ', desc:'数字パズルで脳活。', effect:E(0,+4,0,0) }
-      ];
-    case 9:
-      return [
-        { title:'防災の日・避難訓練', desc:'動線確認で安心。', effect:E(+1,+2,0,+1) },
-        { title:'敬老イベント', desc:'祝われて交流が広がる。', effect:E(0,+3,0,+1) },
-        { title:'ウォーキング再開', desc:'涼しく距離を少し伸ばす。', effect:E(+4,0,0,0) }
-      ];
-    case 10:
-      return [
-        { title:'紅葉ハイキング', desc:'段差に注意し無理なく。', effect:E(+5,0,0,0) },
-        { title:'陶芸体験', desc:'手を使い集中。', effect:E(0,+2,+1,0) },
-        { title:'地域カフェ', desc:'近況報告で安心。', effect:E(+1,+2,0,+1) }
-      ];
-    case 11:
-      return [
-        { title:'フリマ出店準備', desc:'不要品選びと値付け。', effect:E(0,+2,+1,+1) },
-        { title:'健康チェック（公民館）', desc:'血圧/口腔ケアで整える。', effect:E(+3,0,0,0) },
-        { title:'朗読会に参加', desc:'声を出してすっきり。', effect:E(0,+2,0,+1) }
-      ];
-    case 12:
-      return [
-        { title:'年賀状づくり', desc:'ひと言に気持ちを。', effect:E(0,+3,+1,0) },
-        { title:'大掃除ストレッチ', desc:'できる範囲で体を動かす。', effect:E(+4,0,0,0) },
-        { title:'餅つき見学・手伝い', desc:'無理なく参加し交流。', effect:E(+1,+2,0,+1) }
-      ];
-    default:
-      return [
-        { title:'近所を散歩', desc:'無理のない距離で歩く。', effect:E(+3,0,0,0) },
-        { title:'地域カフェ', desc:'お茶と会話で気分転換。', effect:E(0,+2,0,+1) },
-        { title:'動画で学ぶ', desc:'気になるテーマを視聴。', effect:E(0,+3,+1,0) }
-      ];
-  }
-}
-
-function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
-function fmt(n){ return (n>0?'+':'') + n; }
-
+// 既存の render() をエピソード前提に調整
 function render() {
   updateHUD();
   renderMonths();
-  $('#month-title').textContent = `${monthLabels[state.turn-1]}の行動を選ぶ`;
-
-  // 「次の月へ」ボタンは初期OFF
+  $('#month-title').textContent = `${monthLabels[state.turn-1]}の選択`;
   const nextBtn = $('#next');
   nextBtn.disabled = !state.monthDone[state.turn - 1];
   nextBtn.classList.remove('cta-pulse');
-
-  // カード
-  const list = $('#card-list');
-  list.innerHTML = '';
-  const cards = monthlyCards(state.turn);
-  cards.forEach((c, i) => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.style.animationDelay = `${i*0.03}s`; // 配られる風の軽い遅延
-    div.tabIndex = 0;
-    div.innerHTML = `
-      <h4>${c.title}</h4>
-      <p class="effects">${c.desc}</p>
-      <p class="effects">効果：体力 ${fmt(c.effect.hp)} / 気力 ${fmt(c.effect.sp)} / 趣味Lv ${fmt(c.effect.hobby)} / 交流Lv ${fmt(c.effect.social)}</p>
-    `;
-    div.addEventListener('click', () => selectCard(c, div));
-    div.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectCard(c, div); }
-    });
-    list.appendChild(div);
-  });
 }
 
-function selectCard(card, el) {
+// ========== エピソード描画/選択 ==========
+function getEpisodeByTurn(turn) {
+  // episodes.json は 1月→index0 で入っている前提
+  return episodes[turn - 1] ?? null;
+}
+
+function renderEpisode() {
+  const container = $('#card-list'); // 既存の領域を再利用
+  container.innerHTML = '';
+
+  const ep = getEpisodeByTurn(state.turn);
+  if (!ep) {
+    container.innerHTML = `<div class="card">データが見つかりません。</div>`;
+    return;
+  }
+
+  // エピソード本文
+  const epBox = document.createElement('div');
+  epBox.className = 'card';
+  epBox.innerHTML = `<h4>${monthLabels[state.turn-1]} エピソード</h4><p>${ep.episode}</p>`;
+  container.appendChild(epBox);
+
+  // 選択肢（3つ）
+  const choicesWrap = document.createElement('div');
+  choicesWrap.id = 'choices';
+  ep.choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `
+      <span>${choice.text}</span>
+      ${renderEffectHint(choice.effect)}
+    `;
+    btn.addEventListener('click', () => handleChoice(choice, btn, choicesWrap));
+    choicesWrap.appendChild(btn);
+  });
+  container.appendChild(choicesWrap);
+
+  // 「次の月へ」は選択完了まで無効
+  const nextBtn = $('#next');
+  nextBtn.disabled = true;
+  nextBtn.classList.remove('cta-pulse');
+}
+
+function renderEffectHint(effect = {}) {
+  // 日本語キー/英語キーの両対応
+  const hp = (effect.hp ?? effect['体力'] ?? 0);
+  const sp = (effect.sp ?? effect['気力'] ?? 0);
+  const hobby = (effect.hobby ?? effect['趣味'] ?? 0);
+  const social = (effect.social ?? effect['交流'] ?? 0);
+  const fmt = n => (n>0?`+${n}`: `${n}`);
+  return `
+    <small class="effects">
+      効果：体力 ${fmt(hp)} / 気力 ${fmt(sp)} / 趣味Lv ${fmt(hobby)} / 交流Lv ${fmt(social)}
+    </small>
+  `;
+}
+
+function handleChoice(choice, btnEl, wrapEl) {
   if (state.monthDone[state.turn - 1]) return;
 
-  // 見た目ハイライト
-  $$('#card-list .card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+  // ボタンUI：選んだものを強調、他は無効化
+  $$('#choices .choice-btn').forEach(b => b.disabled = true);
+  btnEl.classList.add('selected');
 
   // 効果適用
-  applyEffects(card.effect);
+  applyChoiceEffect(choice.effect);
 
-  // 今月完了
+  // 分岐の下地（任意）：choice.route / choice.routeBonus で加点
+  if (choice.route && routeScore[choice.route] != null) {
+    routeScore[choice.route] += 1;
+  }
+  if (choice.routeBonus) {
+    for (const k in choice.routeBonus) {
+      if (routeScore[k] != null) routeScore[k] += Number(choice.routeBonus[k] || 0);
+    }
+  }
+
+  // 今月完了フラグ
   state.monthDone[state.turn - 1] = true;
 
-  // 演出：選んだカードは「picked」、他は「disabled」
-  $$('#card-list .card').forEach(c => {
-    if (c !== el) c.classList.add('disabled');
-  });
-  el.classList.add('picked');
-
-  // アバターが1回だけ「揺れる」（行動に反応）
+  // アバター軽い演出
   const avatar = $('#avatar');
-  avatar.classList.remove('shake'); void avatar.offsetWidth; // 再生リセット
+  avatar.classList.remove('shake'); void avatar.offsetWidth;
   avatar.classList.add('shake');
 
-  // 5%でレアイベント（軽い嬉しさ）
+  // 低確率のちょい嬉しいランダム
   if (Math.random() < 0.05) {
     state.sp = Math.min(100, state.sp + 2);
-    log('⭐ レアイベント発生：地域の人に声をかけられた → 気力+2');
+    log('⭐ レアイベント：近所の人に声をかけられた → 気力+2');
     updateHUD();
   }
 
-  // 「次の月へ」を有効化＆2回だけ脈動
+  // 次へ
   const nextBtn = $('#next');
   nextBtn.disabled = false;
   nextBtn.classList.add('cta-pulse');
 
-  // 月バー更新
   renderMonths();
 }
 
-function applyEffects(eff) {
-  state.hp = clamp(state.hp + eff.hp, 0, 100);
-  state.sp = clamp(state.sp + eff.sp, 0, 100);
-  state.hobby = clamp(state.hobby + eff.hobby, 1, 5);
-  state.social = clamp(state.social + eff.social, 1, 5);
+function applyChoiceEffect(effect = {}) {
+  // 日本語キー/英語キーの両対応
+  const hp = (effect.hp ?? effect['体力'] ?? 0);
+  const sp = (effect.sp ?? effect['気力'] ?? 0);
+  const hobby = (effect.hobby ?? effect['趣味'] ?? 0);
+  const social = (effect.social ?? effect['交流'] ?? 0);
+
+  // クランプ
+  state.hp     = Math.max(0, Math.min(100, state.hp + hp));
+  state.sp     = Math.max(0, Math.min(100, state.sp + sp));
+  state.hobby  = Math.max(1, Math.min(5,   state.hobby + hobby));
+  state.social = Math.max(1, Math.min(5,   state.social + social));
 
   updateHUD();
-  log(`${monthLabels[state.turn-1]}：カード適用 → 体力${state.hp} / 気力${state.sp} / 趣味Lv${state.hobby} / 交流Lv${state.social}`);
+  log(`${monthLabels[state.turn-1]}：選択適用 → 体力${state.hp} / 気力${state.sp} / 趣味Lv${state.hobby} / 交流Lv${state.social}`);
 
-  // 見守りセーフティ：体力が低いとき稀に+4
+  // セーフティ：体力が低い時に稀に回復
   if (state.hp < 20 && Math.random() < 0.25) {
     state.hp = Math.min(100, state.hp + 4);
-    log('見守り発動：近所から差し入れ → 体力+4');
+    log('見守り：差し入れ → 体力+4');
     updateHUD();
   }
 }
 
-$('#next').addEventListener('click', () => {
-  if (!state.monthDone[state.turn - 1]) return;
-  if (state.turn >= state.maxTurn) {
-    endGame();
-    return;
-  }
+// 次の月へ
+$('#next')?.addEventListener('click', () => {
+  if (!state.monthDone?.[state.turn - 1]) return;
+  if (state.turn >= state.maxTurn) { endGame(); return; }
   state.turn += 1;
   render();
+  renderEpisode();
 });
 
+// エンディング（将来の分岐に拡張可）
 function endGame() {
+  // 既存の表示
   $('#end-hp').textContent = state.hp;
   $('#end-sp').textContent = state.sp;
   $('#end-hobby').textContent = state.hobby;
   $('#end-social').textContent = state.social;
 
-  const msg = (state.hobby>=4 || state.social>=4)
-    ? '趣味や交流が日常を豊かにしました。'
-    : '小さな一歩から、来年はもっと外へ。';
-  $('#ending-title').textContent = `エンディング：${msg}`;
+  // まずはパラメータ閾値で簡易分岐
+  let msg = '';
+  if (state.hobby >= 4 || routeScore.longevity >= 3) {
+    msg = 'エンディング：趣味が日常を豊かにし、健やかな毎日へ。';
+  } else if (state.social >= 4 || routeScore.community >= 3) {
+    msg = 'エンディング：地域のつながりが生きる力に。';
+  } else if (routeScore.family >= 3) {
+    msg = 'エンディング：家族時間が心を満たした一年。';
+  } else {
+    msg = 'エンディング：小さな一歩。来年はもう少し外へ。';
+  }
+  $('#ending-title').textContent = msg;
 
   $('#ending').classList.remove('hidden');
 }
 
+// リスタート（既存の戻り動線）
 $('#restart')?.addEventListener('click', () => {
-  // 最初のタイトルへ戻す（提出用デモとして分かりやすい）
   $('#ending').classList.add('hidden');
   selection.character = selection.family = selection.district = null;
   $('#to-choose-family').disabled = true;
@@ -373,4 +350,22 @@ function log(msg){
   const li = document.createElement('li');
   li.textContent = msg;
   $('#log').prepend(li);
+}
+
+// 失敗時の簡易エピソード
+function fallbackEpisodes(){
+  // 先にお渡ししたサンプルJSONの最初の数件を簡略化したダミー
+  return [
+    { month:1, episode:"新年。近所の人から初詣に誘われた。", choices:[
+      { text:"元気に参加する", effect:{"体力":-2,"気力":+3,"交流":+1}, route:"community" },
+      { text:"家でゆっくり過ごす", effect:{"体力":+2,"気力":+1} },
+      { text:"短時間だけ顔を出す", effect:{"体力":-1,"交流":+1} }
+    ]},
+    { month:2, episode:"趣味の講座のチラシがポストに入っていた。", choices:[
+      { text:"申し込む", effect:{"気力":+2,"趣味":+1}, route:"longevity" },
+      { text:"気になるがやめておく", effect:{"気力":-1} },
+      { text:"友達を誘って一緒に行く", effect:{"気力":+2,"趣味":+1,"交流":+1}, routeBonus:{community:1,longevity:1} }
+    ]},
+    // …以降は本物の episodes.json を使用
+  ];
 }
