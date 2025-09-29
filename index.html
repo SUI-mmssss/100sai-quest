@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="src/css/styles.css" />
 </head>
 <body>
-  <!-- build: 2025-09-29-1008 -->
   <!-- ===== スクリーン: タイトル ===== -->
   <section id="screen-title" class="screen active">
     <div class="centered column">
@@ -66,6 +65,11 @@
     </header>
 
     <main>
+      <!-- ゲーム画面内（main の先頭 or 月バーの直前） -->
+      <section class="stage">
+        <div id="bg"></div>
+      </section>
+
       <!-- 月バー -->
       <section class="months centered">
         <div id="months" class="months-bar" aria-label="月の進行表示"></div>

@@ -223,3 +223,28 @@ button.cta-pulse { animation: pulse 1.4s ease-out 2; }
 }
 .ending-card h2 { margin: 0 0 10px 0; font-size:22px; }
 .ending-card button { margin-top: 14px; }
+
+/* === 背景ステージ（分岐デモ用） ==================== */
+.stage {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid #23242b;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+/* 背景画像を差し替えるターゲット（app.js の renderBackground が更新） */
+#bg {
+  height: 220px;
+  background: #111 center/cover no-repeat;
+  filter: saturate(1.05);
+  border-bottom: 1px solid #23242b;
+}
+
+/* 背景上のエピソードタイトルを読みやすく（任意） */
+#month-title {
+  margin: 14px 0 8px 0;
+  font-size: 18px;
+  color: #e6edf6;
+}
