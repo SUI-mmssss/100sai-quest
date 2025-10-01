@@ -32,7 +32,6 @@ function wrapContainer(...nodes){
   root.append(header, cont);
 }
 
-/** boolean属性はプロパティで制御 */
 function el(tag, attrs={}, children=[]){
   const e = document.createElement(tag);
   for (const [k,v] of Object.entries(attrs)){
@@ -55,14 +54,22 @@ function el(tag, attrs={}, children=[]){
   return e;
 }
 
+/* -------------------------
+   #title 画面（中央寄せ）
+------------------------- */
 function renderTitle(){
   wrapContainer(
     el("h2", {}, "100歳クエスト（10-12月デモ）"),
     el("p", {}, "“趣味×地域×交流”で、100歳の毎月を小さく冒険するシミュレーション。"),
-    el("div", {}, [ el("button", { class:"btn primary", onclick:()=>go("intro") }, "はじめる") ])
+    el("div", { class:"nav-buttons" }, [
+      el("button", { class:"btn primary", onclick:()=>go("intro") }, "はじめる")
+    ])
   );
 }
 
+/* -------------------------
+   #intro 画面（中央寄せ）
+------------------------- */
 function renderIntro(){
   wrapContainer(
     el("h2", {}, "ゲーム説明"),
@@ -71,10 +78,15 @@ function renderIntro(){
       el("li", {}, "キャラ（麺のかたさ）・家族構成・居住地区によって初期値と出現内容が少し変化。"),
       el("li", {}, "今回は10月→11月→12月の3か月デモ。最後に“生成AI風アドバイス”が表示。")
     ]),
-    el("div", {}, [ el("button", { class:"btn primary", onclick:()=>go("char") }, "つぎへ") ]),
+    el("div", { class:"nav-buttons" }, [
+      el("button", { class:"btn primary", onclick:()=>go("char") }, "つぎへ")
+    ])
   );
 }
 
+/* -------------------------
+   #char 画面
+------------------------- */
 function renderChar(){
   wrapContainer(
     el("h2", {}, "キャラ選択（ラーメンの麺のかたさ）"),
@@ -83,7 +95,7 @@ function renderChar(){
       cardSel("ふつう","normal","バランス型。地道に続けられる。"),
       cardSel("かため","hard","行動力高め。挑戦好き。"),
     ]),
-    navNext(()=>go("family"), Boolean(state.chosen.char))
+    navNext("intro", ()=>go("family"), Boolean(state.chosen.char))
   );
   function cardSel(label, key, desc){
     const selected = state.chosen.char===key ? " selected" : "";
@@ -92,12 +104,14 @@ function renderChar(){
       renderChar();
     } }, [
       el("strong", {}, label),
-      el("div", {}, desc),
-      el("div", { class:"badge" }, state.chosen.char===key ? "選択中" : "クリックで選択")
+      el("div", {}, desc)
     ]);
   }
 }
 
+/* -------------------------
+   #family 画面
+------------------------- */
 function renderFamily(){
   wrapContainer(
     el("h2", {}, "家族構成を選ぶ"),
@@ -106,7 +120,7 @@ function renderFamily(){
       card("夫婦","couple","支え合いで安定。予定調整がカギ。"),
       card("友人とシェア","share","交流多め。体力配分に注意。")
     ]),
-    navNext(()=>go("district"), Boolean(state.chosen.family))
+    navNext("char", ()=>go("district"), Boolean(state.chosen.family))
   );
   function card(label, key, desc){
     const selected = state.chosen.family===key ? " selected" : "";
@@ -114,12 +128,15 @@ function renderFamily(){
       state.chosen.family = key;
       renderFamily();
     } }, [
-      el("strong", {}, label), el("div", {}, desc),
-      el("div", { class:"badge" }, state.chosen.family===key ? "選択中" : "クリックで選択")
+      el("strong", {}, label), 
+      el("div", {}, desc)
     ]);
   }
 }
 
+/* -------------------------
+   #district 画面（区色ボーダー）
+------------------------- */
 function renderDistrict(){
   wrapContainer(
     el("h2", {}, "居住地区を選ぶ"),
@@ -132,32 +149,39 @@ function renderDistrict(){
       card("城南区","jonan","学び系の機会が多い住宅地。"),
       card("南区","minami","商店街や地域サロンで交流が増える。"),
     ]),
-    navNext(()=>{
+    navNext("family", ()=>{
       applyStart(state);
-      renderGame(); // 直接遷移
+      renderGame();
     }, Boolean(state.chosen.district))
   );
+
+  // 区カード（d-<key> クラスを付与）→ CSSで左線色を出す
   function card(label, key, desc){
     const selected = state.chosen.district===key ? " selected" : "";
-    return el("div", { class:"option"+selected, onclick:()=>{ 
+    return el("div", { class:"option d-"+key + selected, onclick:()=>{ 
       state.chosen.district = key;
       renderDistrict();
     } }, [
-      el("strong", {}, label), el("div", {}, desc),
-      el("div", { class:"badge" }, state.chosen.district===key ? "選択中" : "クリックで選択")
+      el("strong", {}, label), 
+      el("div", {}, desc)
     ]);
   }
 }
 
-function navNext(onNext, enabled){
-  return el("div", {}, [
-    el("button", { class:"btn ghost", onclick:()=>go("title") }, "タイトルへ戻る"),
+/* -------------------------
+   ナビゲーション共通
+------------------------- */
+function navNext(prevName, onNext, enabled){
+  return el("div", { class:"nav-buttons" }, [
+    el("button", { class:"btn ghost", onclick:()=>go(prevName) }, "1つ前に戻る"),
     el("button", { class:"btn primary", onclick: onNext, disabled: !enabled }, "つぎへ")
   ]);
 }
 
+/* -------------------------
+   ゲーム本編
+------------------------- */
 function renderGame(){
-  // arguments.callee は使わず、関数を変数に束縛して再利用
   const handleChoice = (choice)=>{
     applyDelta(state, choice.delta);
     state.log.push({ month: state.monthIndex, choice: choice.tag });
@@ -170,6 +194,9 @@ function renderGame(){
   renderGameScreen(state, root, handleChoice);
 }
 
+/* -------------------------
+   振り返り
+------------------------- */
 function renderAdviceScreen(){
   renderAdvice(state, root, ()=>{ location.reload(); });
 }

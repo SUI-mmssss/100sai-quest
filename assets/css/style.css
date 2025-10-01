@@ -1,70 +1,129 @@
 /* 100歳クエスト Demo Styles (GitHub Pages ready) */
-/* 全体フォントを10%UP */
+/* ---- Light Theme Variables ---- */
 :root{
-  --bg:#0b0f14;--card:#121922;--muted:#91a4b6;--accent:#3aa6ff;--accent2:#7bd389;--danger:#ff6b6b;--warn:#ffcc66;--good:#4dd1a1;
+  /* ライト基調 */
+  --bg:#ffffff;
+  --fg:#111111;
+  --muted:#555e68;
+  --card:#ffffff;
+  --line:rgba(0,0,0,.08);
+  --shadow:0 8px 24px rgba(0,0,0,.08);
+  --accent:#2b7cff;
+  --accent2:#34d3a3;
+  --danger:#e53935; --warn:#f6b93b; --good:#2e7d32;
   --label-w:56px; /* ステータス左ラベル幅 */
+
+  /* 区ごとの色（近似色） */
+  --hakata:#6a1b9a;   /* 紫 */
+  --chuo:#d32f2f;     /* 赤 */
+  --higashi:#1976d2;  /* 青 */
+  --nishi:#ef6c00;    /* 橙 */
+  --sawara:#2e7d32;   /* 緑 */
+  --jonan:#283593;    /* 藍 */
+  --minami:#7b1fa2;   /* 濃紫 */
 }
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
   font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-  font-size:110%; /* ここで10%UP */
+  font-size:110%;
   line-height:1.6;
-  color:#eaf2f8;
-  background:linear-gradient(180deg,#0b0f14,#0e141c 40%,#0b0f14)
+  color:var(--fg);
+  background:var(--bg);
 }
 a{color:var(--accent)}
 .container{max-width:1080px;margin:0 auto;padding:24px}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .brand{display:flex;gap:12px;align-items:center}
-.logo{width:40px;height:40px;border-radius:12px;background:radial-gradient(circle at 30% 30%,#58b0ff,#0066cc);box-shadow:0 6px 20px rgba(58,166,255,.35)}
+.logo{width:40px;height:40px;border-radius:12px;background:radial-gradient(circle at 30% 30%,#58b0ff,#0066cc);box-shadow:0 6px 20px rgba(43,124,255,.25)}
 .brand h1{margin:0;font-size:20px;letter-spacing:.2px}
-.card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+
+/* タイトル/イントロの中央寄せ（centerクラス） */
+.center{display:grid;gap:14px;padding:22px;text-align:center}
 
 .screen{position:relative;display:grid;grid-template-columns: 1fr 72px;gap:16px}
 .content{padding:18px}
 .row{display:grid;grid-template-columns: 280px 1fr;gap:16px}
 
 .status{padding:16px}
-.avatar{width:100%;aspect-ratio:1/1.05;border-radius:12px;background:linear-gradient(135deg,#1b2533,#0f1621);display:grid;place-items:center;color:#cfe6ff;font-weight:700}
+.avatar{
+  width:100%;aspect-ratio:1/1.05;border-radius:12px;
+  background:linear-gradient(135deg,#f3f8ff,#e7f0ff);
+  display:grid;place-items:center;color:#1e3a8a;font-weight:700
+}
 .meta{margin-top:12px;font-size:14px;color:var(--muted)}
 .meta div{margin:2px 0}
 .bars{margin-top:12px;display:grid;gap:10px}
 
 /* ステータス行：左ラベル / 中バー / 右数値 */
 .stat-row{display:grid;grid-template-columns: var(--label-w) 1fr 36px;align-items:center;gap:10px}
-.stat-label{color:#cfe6ff;opacity:.9}
-.stat-val{color:#9fb3c7;text-align:right}
+.stat-label{color:#1e3a8a;opacity:.9}
+.stat-val{color:#34495e;text-align:right}
 
-.bar{background:#0c121a;border-radius:10px;position:relative;height:12px;overflow:hidden;border:1px solid rgba(255,255,255,.06)}
-.bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--good));width:40%}
+.bar{background:#f1f5f9;border-radius:10px;position:relative;height:12px;overflow:hidden;border:1px solid var(--line)}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,#2b7cff,#34d3a3);width:40%}
 
 .story{padding:16px;display:grid;gap:12px}
 .month-title{font-size:18px;margin:0 0 4px}
-.episode{padding:12px 14px;background:#0c121a;border:1px solid rgba(255,255,255,.06);border-radius:12px}
+.episode{padding:12px 14px;background:#f8fafc;border:1px solid var(--line);border-radius:12px}
 .choices{display:grid;gap:8px}
+
+/* 選択肢ボタン（ライト基調） */
 .choice-btn,
-.choices button{padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#152131;color:#eaf2f8;cursor:pointer;font-size:14px;text-align:left}
-.choices button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.choices button{
+  padding:12px 14px;border-radius:10px;border:1px solid var(--line);
+  background:#f7f8fa;color:#111;cursor:pointer;font-size:14px;text-align:left;
+  transition:transform .12s ease, box-shadow .12s ease, background-color .12s ease, color .12s ease;
+}
+.choices button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 16px rgba(0,0,0,.12);
+  background:#e8f1ff; color:#111;
+}
 
+/* 月インデックス（ライト） */
 .month-index{position:sticky;top:16px;height:fit-content;padding:8px}
-.tab{display:flex;align-items:center;justify-content:center;height:42px;margin:8px 0;border-radius:10px;background:#0c121a;border:1px solid rgba(255,255,255,.06);font-size:12px;color:#9fb3c7;opacity:.6}
-.tab.active{background:linear-gradient(180deg,#16324a,#1a4063);color:#fff;opacity:1;box-shadow:0 6px 18px rgba(58,166,255,.35)}
+.tab{
+  display:flex;align-items:center;justify-content:center;height:42px;margin:8px 0;border-radius:10px;
+  background:#f8fafc;border:1px solid var(--line);font-size:12px;color:#5e6b78;opacity:.9
+}
+.tab.active{background:linear-gradient(180deg,#e8f0ff,#e0ebff);color:#0f172a;box-shadow:0 6px 18px rgba(43,124,255,.18)}
 
-.footer-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid rgba(255,255,255,.06)}
-.btn{padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#142032;color:#fff;cursor:pointer}
-.btn.primary{background:linear-gradient(90deg,#2b7cff,#34d3a3)}
-.btn.ghost{background:transparent;border-color:rgba(255,255,255,.2);color:#cfe6ff}
-.btn:disabled{opacity:.6;cursor:not-allowed}
+/* フッター/ボタン（ライト） */
+.footer-nav{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.btn{
+  padding:10px 14px;border-radius:10px;border:1px solid var(--line);
+  background:#f5f7fb;color:#111;cursor:pointer
+}
+.btn.primary{background:linear-gradient(90deg,#2b7cff,#34d3a3);color:#fff;border-color:transparent}
+.btn.ghost{background:#fff;border-color:var(--line);color:#1f2937}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
 /* Wizard screens */
-.center{display:grid;gap:14px;padding:22px}
-.center h2{margin:0}
 .options{display:grid;gap:10px;grid-template-columns: repeat(auto-fit,minmax(220px,1fr))}
-.option{padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#111927;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, outline .12s ease}
-.option:hover{transform:translateY(-1px)}
-.option.selected{outline:2px solid var(--accent);box-shadow:0 0 0 4px rgba(58,166,255,.15) inset;background:#0f1a28}
+.option{
+  padding:12px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, outline .12s ease, background-color .12s ease, color .12s ease, border-color .12s ease
+}
+.option:hover{transform:translateY(-1px); background:#f6faff; color:#111;}
+.option.selected{outline:2px solid var(--accent);box-shadow:0 0 0 4px rgba(43,124,255,.12) inset;background:#eef5ff}
 .option small{opacity:.8;color:var(--muted)}
-.badge{display:inline-block;padding:2px 8px;border:1px solid rgba(255,255,255,.15);border-radius:999px;font-size:12px;color:#cfe6ff;margin-left:6px}
+.badge{display:none} /* バッジ非表示（JS側でも生成していない） */
+
+/* ナビゲーションボタン中央寄せ */
+.nav-buttons{display:flex;justify-content:center;gap:12px;margin-top:16px}
+
+/* ---- 区別ボーダー（#district 用） ---- */
+/* 視認性が高く控えめな左線で色を出す */
+.option.d-hakata { border-left:6px solid var(--hakata); }
+.option.d-chuo   { border-left:6px solid var(--chuo); }
+.option.d-higashi{ border-left:6px solid var(--higashi); }
+.option.d-nishi  { border-left:6px solid var(--nishi); }
+.option.d-sawara { border-left:6px solid var(--sawara); }
+.option.d-jonan  { border-left:6px solid var(--jonan); }
+.option.d-minami { border-left:6px solid var(--minami); }
+
 .hidden{display:none}
