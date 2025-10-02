@@ -54,9 +54,6 @@ function el(tag, attrs={}, children=[]){
   return e;
 }
 
-/* -------------------------
-   #title 画面（中央寄せ）
-------------------------- */
 function renderTitle(){
   wrapContainer(
     el("h2", {}, "100歳クエスト（10-12月デモ）"),
@@ -67,26 +64,22 @@ function renderTitle(){
   );
 }
 
-/* -------------------------
-   #intro 画面（中央寄せ）
-------------------------- */
 function renderIntro(){
   wrapContainer(
-    el("h2", {}, "ゲーム説明"),
-    el("ul", {}, [
-      el("li", {}, "毎月エピソードから行動を1つ選び、ステータスが上下します。"),
-      el("li", {}, "キャラ（麺のかたさ）・家族構成・居住地区によって初期値と出現内容が少し変化。"),
-      el("li", {}, "今回は10月→11月→12月の3か月デモ。最後に“生成AI風アドバイス”が表示。")
-    ]),
-    el("div", { class:"nav-buttons" }, [
-      el("button", { class:"btn primary", onclick:()=>go("char") }, "つぎへ")
+    el("div", { id:"intro" }, [
+      el("h2", {}, "ゲーム説明"),
+      el("ul", {}, [
+        el("li", {}, "毎月エピソードから行動を1つ選び、ステータスが上下します。"),
+        el("li", {}, "キャラ（麺のかたさ）・家族構成・居住地区によって初期値と出現内容が少し変化。"),
+        el("li", {}, "今回は10月→11月→12月の3か月デモ。最後に“生成AI風アドバイス”が表示。")
+      ]),
+      el("div", { class:"nav-buttons" }, [
+        el("button", { class:"btn primary", onclick:()=>go("char") }, "つぎへ")
+      ])
     ])
   );
 }
 
-/* -------------------------
-   #char 画面
-------------------------- */
 function renderChar(){
   wrapContainer(
     el("h2", {}, "キャラ選択（ラーメンの麺のかたさ）"),
@@ -109,9 +102,6 @@ function renderChar(){
   }
 }
 
-/* -------------------------
-   #family 画面
-------------------------- */
 function renderFamily(){
   wrapContainer(
     el("h2", {}, "家族構成を選ぶ"),
@@ -134,9 +124,6 @@ function renderFamily(){
   }
 }
 
-/* -------------------------
-   #district 画面（区色ボーダー）
-------------------------- */
 function renderDistrict(){
   wrapContainer(
     el("h2", {}, "居住地区を選ぶ"),
@@ -155,7 +142,6 @@ function renderDistrict(){
     }, Boolean(state.chosen.district))
   );
 
-  // 区カード（d-<key> クラスを付与）→ CSSで左線色を出す
   function card(label, key, desc){
     const selected = state.chosen.district===key ? " selected" : "";
     return el("div", { class:"option d-"+key + selected, onclick:()=>{ 
@@ -168,9 +154,6 @@ function renderDistrict(){
   }
 }
 
-/* -------------------------
-   ナビゲーション共通
-------------------------- */
 function navNext(prevName, onNext, enabled){
   return el("div", { class:"nav-buttons" }, [
     el("button", { class:"btn ghost", onclick:()=>go(prevName) }, "1つ前に戻る"),
@@ -178,9 +161,6 @@ function navNext(prevName, onNext, enabled){
   ]);
 }
 
-/* -------------------------
-   ゲーム本編
-------------------------- */
 function renderGame(){
   const handleChoice = (choice)=>{
     applyDelta(state, choice.delta);
@@ -194,9 +174,6 @@ function renderGame(){
   renderGameScreen(state, root, handleChoice);
 }
 
-/* -------------------------
-   振り返り
-------------------------- */
 function renderAdviceScreen(){
   renderAdvice(state, root, ()=>{ location.reload(); });
 }
