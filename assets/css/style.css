@@ -27,7 +27,7 @@
 html,body{height:100%}
 body{
   margin:0;
-  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
   font-size:110%;
   line-height:1.6;
   color:var(--fg);
@@ -58,6 +58,7 @@ header{
 }
 #title li,#intro li,#advice li{ text-align:left }
 
+/* ===== 既定レイアウト（デスクトップ基準だった部分を後段でモバイル優先に上書き） ===== */
 .screen{position:relative;display:grid;grid-template-columns: 1fr 72px;gap:16px}
 .content{padding:18px}
 .row{display:grid;grid-template-columns: 280px 1fr;gap:16px}
@@ -141,3 +142,80 @@ header{
 .option.d-minami { border-left:6px solid var(--minami); }
 
 .hidden{display:none}
+
+/* =========================================================
+   ▼ レスポンシブ（モバイル優先の上書き）
+   既存HTML/クラスは維持したまま、狭幅→広幅の順で最適化
+   ========================================================= */
+
+/* 共通: 日本語の“1字縦積み”防止と可読性 */
+#intro, #advice, .episode, .story, .content, .center {
+  writing-mode: horizontal-tb;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+  letter-spacing: .02em;
+}
+
+/* モバイル（～479px）: 1カラム徹底 */
+@media (max-width: 479px) {
+  .container { padding: 12px; }
+  header { padding-left:12px; padding-right:12px; }
+
+  /* 画面は縦積み */
+  .screen { grid-template-columns: 1fr; gap: 12px; }
+
+  /* 左カード＋右本文を縦並びに */
+  .row { grid-template-columns: 1fr; gap: 12px; }
+
+  /* 月インデックスは最下部へ（縦スクロールしやすく） */
+  .month-index { position: static; padding: 0; order: 3; }
+  .tab { height: 38px; margin: 6px 0; font-size: 12px; }
+
+  /* 余白とタップ領域拡大 */
+  .status, .story, .content { padding: 12px; }
+  .choices { gap: 10px; }
+  .choices button, .btn { min-height: 44px; }
+
+  /* オプションカードは1列～2列可（最小幅160px） */
+  .options { grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; }
+
+  /* アバターはやや縦長に */
+  .avatar { min-height: 180px; }
+
+  /* フッター：縦積み */
+  .footer-nav { flex-direction: column; gap: 10px; align-items: stretch; }
+}
+
+/* タブレット（≥480px ～ 767px）: 1～2カラム */
+@media (min-width: 480px) and (max-width: 767px) {
+  .container { padding: 16px; }
+  .screen { grid-template-columns: 1fr; gap: 14px; }
+  .row { grid-template-columns: 1fr; }
+  .month-index { position: static; padding: 4px 0; }
+  .options { grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); }
+  .avatar { min-height: 200px; }
+}
+
+/* タブレット横～小型ノート（768～1023px）: 2カラム */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .container { padding: 20px; }
+  /* 左カード(280px) + 右本文、月インデックスは下段 */
+  .row { grid-template-columns: 280px 1fr; }
+  .screen { grid-template-columns: 1fr; } /* 月インデックスは下 */
+  .month-index { position: static; }
+}
+
+/* デスクトップ（≥1024px）: 3カラム風 */
+@media (min-width: 1024px) {
+  /* 既存の .row(左/右) + .screen(本文/インデックス) をそのまま活かす */
+  .screen { grid-template-columns: 1fr 88px; }
+  .month-index { position: sticky; top: 16px; }
+  .avatar { min-height: 220px; }
+}
+
+/* アクセシビリティ：フォーカス可視化 */
+:focus-visible {
+  outline: 3px solid rgba(59,130,246,.6);
+  outline-offset: 2px;
+}
