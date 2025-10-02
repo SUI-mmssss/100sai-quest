@@ -89,7 +89,8 @@ export function renderAdvice(state, root, onRestart){
     h("div", {}, "デモ完了")
   ]);
   const tips = makeAdvice(state);
-  const card = h("div", { class:"card center" }, [
+
+  const card = h("div", { id:"advice", class:"card center" }, [
     h("h2", {}, "12月終了！ 生成AI風アドバイス（デモ）"),
     h("p", {}, `今のあなたは「体力${state.stats.hp}／気力${state.stats.sp}／趣味Lv${state.stats.hobby}／交流Lv${state.stats.social}」。`),
     h("ul", {}, tips.map(t=>h("li",{},t))),
